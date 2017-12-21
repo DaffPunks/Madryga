@@ -572,6 +572,71 @@ function longsToStr(longs) {
  * Start of JS
  */
 
+var VALID_HEX = /^0x[0-9abcdefABCDEF]+$/;
 
- 
 
+$('#en_btn').click(function (){
+    validateForm("#en_cypher");
+
+    var key = $("en_cypher").val();
+    var input = $("en_text").val();
+
+    key = strToLongs(key)[0];
+    input = utf8.encode(input);
+    input = strToLongs(input);
+    output = madryga.encrypt(input, key);
+    // output is now an Array of Longs. Convert to single base 64
+    //  string before returning
+    output = longsToStr(output);
+    output = base64.encode(output);
+
+    alert(output);
+});
+
+$('#de_btn').click(function (){
+    validateForm("#de_cypher");
+
+    var key = $("de_cypher").val();
+    var input = $("de_text").val();
+
+    input = base64.decode(input);
+    input = strToLongs(input);
+    output = madryga.decrypt(input, key);
+    output = longsToStr(output);
+    output = utf8.decode(output).rtrim();
+
+    alert(output);
+});
+
+function validateForm(key) {
+    var valid = true;
+    var key = $(key).val();
+    if (!key || !key.trim()) {
+        alert("You must enter a key");
+        valid = false;
+    } else {
+        key = key.trim();
+        var encr_type = $("input:radio[name=key-type]:checked").val();
+        if (encr_type == "key-type-ascii" && key.length != 8) {
+            alert("ASCII key must be exactly 8 characters");
+            valid = false;
+        } else {
+            if (key.split(/\s+/).length > 1) {
+                alert("You must enter a single hexadecimal value, not multiple values");
+                return false;
+            }
+            var khex = parseInt(key, 16);
+            if (!VALID_HEX.test(key) || isNaN(khex))
+            {
+                alert("The hexadecimal value you have entered is not valid."
+                        + "\n\nEnter it in the format 0xFFFFFFFFFFFFFFFF");
+                valid = false;
+            } else if (khex > 0xffffffffffffffff || khex < 0) {
+                alert("The hexadecimal value you have entered is not in the valid range:" +
+                        "\n0x0 - 0xFFFFFFFFFFFFFFFF");
+                valid = false;
+            }
+        }
+    }
+    return valid;
+}
